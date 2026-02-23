@@ -19,9 +19,10 @@ export class OGStorageService {
 
    constructor() {
       this.rpcEndpoint = process.env.NEXT_PUBLIC_0G_RPC_ENDPOINT || 'https://evmrpc-testnet.0g.ai';
-      const privateKey = process.env.NEXT_PUBLIC_0G_PRIVATE_KEY;
-      const indexerEndpoint = process.env.NEXT_PUBLIC_0G_INDEXER_RPC_ENDPOINT || 'https://indexer-testnet.0g.ai';
-      const flowContractAddress = process.env.NEXT_PUBLIC_0G_FLOW_CONTRACT_ADDRESS || '0x0460aA47b41a66694c0a73f667aCEb81cC436726'; // Default Standard Testnet
+      const privateKey = process.env.PRIVATE_KEY;
+      const indexerEndpoint = process.env.NEXT_PUBLIC_0G_INDEXER_RPC_ENDPOINT || 'https://indexer-storage-testnet-standard.0g.ai';
+      // Lowercase address bypasses ethers v6 strict checksum validation
+      const flowContractAddress = process.env.NEXT_PUBLIC_0G_FLOW_CONTRACT_ADDRESS || '0x0460aa47b41a66694c0a73f667aceb81cc436726'; // Default Standard Testnet
 
       if (!privateKey) {
          console.warn("Wallet Private Key missing. Storage writes will fail.");
@@ -41,17 +42,17 @@ export class OGStorageService {
       try {
          // Encode data
          const textData = typeof value === 'string' ? value : JSON.stringify(value);
-         const keyBytes = new TextEncoder().encode(key);
-         const valueBytes = new TextEncoder().encode(textData);
+         const keyBytes = Uint8Array.from(Buffer.from(key, 'utf-8'));
+         const valueBytes = Uint8Array.from(Buffer.from(textData, 'utf-8'));
 
          // Expected StreamID needs to be hex/bytes32 representation 
          const streamId = ethers.id(streamIdStr);
 
-         console.log(`Uploading KV - Stream: ${streamIdStr}, Key: ${key}`);
+         console.log(`Uploading KV - Stream: ${streamIdStr}-${streamId}, Key: ${keyBytes}`);
 
          // 1. Build Stream Data
-         const builder = new StreamDataBuilder(1); // KV Version 1
-         builder.set(streamId, keyBytes, valueBytes);
+         // const builder = new StreamDataBuilder(1); // KV Version 1
+         // builder.set(streamId, keyBytes, valueBytes);
 
          // 2. Select a storage node via the indexer
          const [nodes, err] = await this.indexer.selectNodes(1);
@@ -62,7 +63,8 @@ export class OGStorageService {
 
          // 3. Batch and Execute
          const batcher = new Batcher(1, nodes, this.flowContract, this.rpcEndpoint);
-         batcher.streamDataBuilder = builder;
+         batcher.streamDataBuilder.set(streamId, keyBytes, valueBytes);
+         // batcher.streamDataBuilder = builder;
 
          const [result, execErr] = await batcher.exec();
 
@@ -86,7 +88,7 @@ export class OGStorageService {
    async getKV(streamIdStr: string, key: string): Promise<any | null> {
       try {
          const streamId = ethers.id(streamIdStr);
-         const keyBytes = new TextEncoder().encode(key);
+         const keyBytes = ethers.toUtf8Bytes(key);
 
          // Select a storage node via the indexer to read from
          const [nodes, err] = await this.indexer.selectNodes(1);
@@ -99,8 +101,10 @@ export class OGStorageService {
 
          console.log(`Getting KV - Stream: ${streamIdStr}, Key: ${key} from ${nodes[0].url}`);
 
-         // SDK getValue signature expects (streamId, keyBytes)
-         const value = await kvClient.getValue(streamId, keyBytes as any);
+         // The KV JSON-RPC relies on standard node string types for its param bounds, 
+         // so we MUST base64 encode the `keyBytes` array beforehand, despite TS typings!
+         const base64Key = ethers.encodeBase64(keyBytes);
+         const value = await kvClient.getValue(streamId, base64Key as any);
 
          if (!value || !value.data) {
             console.log("No data found for key:", key);

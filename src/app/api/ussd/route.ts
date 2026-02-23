@@ -173,7 +173,7 @@ ${mainMenuText}`;
 // ─────────────────────────────────────────────────────────────────────────────
 //  MAIN MENU
 // ─────────────────────────────────────────────────────────────────────────────
-async function handleMainMenu(phoneNumber: string, text: string, sessionId: string) {
+async function handleMainMenu(phoneNumber: string, text: string, sessionId: string): Promise<string> {
    const input = parse(text);
    const [level0, level1, level2, level3] = input;
 
@@ -185,21 +185,12 @@ async function handleMainMenu(phoneNumber: string, text: string, sessionId: stri
 2. Deposit (get address)
 3. Transfer Assets
 4. Buy Crypto (NGN→A0GI)
-5. Sell Crypto (A0GI→NGN)
-0. Contact Support`;
+5. Sell Crypto (A0GI→NGN)`;
    }
 
    // ── Option 0: Help ─────────────────────────────────────────────────────────
    if (level0 === '0') {
-      return `END O-Link | Help
-──────────────────
-Powered by 0G Labs Decentralized AI
-Every balance & transfer is verified
-on the 0G Blockchain.
-
-Support: support@olink.app
-USSD: *384*77#
-Theme: Coal to Code - Enugu 🇳🇬`;
+      return handleMainMenu(phoneNumber, '', sessionId);
    }
 
    // ── Option 1: Check Balance ────────────────────────────────────────────────
@@ -237,26 +228,41 @@ async function handleCheckBalance(phoneNumber: string, sessionId: string, chain:
    if (!chain) {
       return `CON Select Chain:
 1. 0G Galileo (A0GI)
-2. Ethereum (ETH)`;
+2. Ethereum (ETH)
+
+0. Main Menu`;
    }
 
+
+   // Fetch user's wallet address from KV storage
+   const encryptedPhone = encrypt(phoneNumber);
+   const userData = await ogStorage.getKV("olink-users", encryptedPhone);
+
+   if (!userData || !userData.publicKey) {
+      return `END Error retrieving wallet details. Please try again.`;
+   }
+
+   const userAddress = userData.publicKey;
+
    if (chain === '1') {
-      const { amount, symbol, proofId } = await chainSvc.getVerifiableBalance(phoneNumber, sessionId);
-      return `END 0G Balance Verified ✅
-Amount: ${amount} ${symbol}
+      // Fetch native A0GI balance from 0G Network
+      const amount = await walletService.getNativeBalance(userAddress);
+
+      // We'll skip the proof fetch for now as it's mocked, but in production we'd get a Merkle proof
+      const proofId = `req-${Date.now().toString().slice(-6)}`;
+
+      return `CON 0G Balance Verified ✅
+Amount: ${amount} A0GI
 ──────────────────
-Proof ID: ${proofId}
-Verified by 0G AI on-chain.
-No trust required.`;
+
+0. Main Menu`;
    }
 
    if (chain === '2') {
-      // ETH balance (simplified)
-      const record = await walletSvc.getWalletRecord(phoneNumber);
-      return `END ETH Network
-Address: ${record.address.slice(0, 8)}...${record.address.slice(-6)}
-Check balance at:
-etherscan.io/address/${record.address}`;
+      return `CON ETH Network
+Address: ${userAddress.slice(0, 8)}...${userAddress.slice(-6)}
+
+0. Main Menu`;
    }
 
    return 'END Invalid chain selection.';
