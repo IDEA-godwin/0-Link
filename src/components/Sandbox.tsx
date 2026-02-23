@@ -1,99 +1,66 @@
-"use client";
-import { useState } from 'react';
-
 export default function Sandbox() {
-   const [ussdInput, setUssdInput] = useState('');
-   const [screen, setScreen] = useState('home'); // home, send, confirming, success
-
-   const handleDial = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (ussdInput === '*123#') {
-         setScreen('menu');
-      } else if (screen === 'menu' && ussdInput === '1') {
-         setScreen('send_amount');
-      } else if (screen === 'send_amount') {
-         setScreen('success');
-      }
-      setUssdInput('');
-   };
-
    return (
-      <section id="try-it-out" className="bg-background py-24 sm:py-32">
-         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center mb-16">
-               <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl text-balance">
-                  Try It Out
-               </h2>
-               <p className="mt-6 text-lg leading-8 text-foreground/80 font-sans">
-                  Experience the 0-Link USSD interface directly in your browser. Dial <span className="font-mono bg-foreground/10 px-2 py-1 rounded text-accent">*123#</span> to get started.
-               </p>
-            </div>
+      <section id="try-it-out" className="bg-background py-24 sm:py-32 relative overflow-hidden">
+         <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-center">
 
-            <div className="flex justify-center items-center">
-               {/* Iframe wrapper simulating the phone */}
-               <div className="relative w-full max-w-[320px] aspect-[9/19] bg-gray-900 rounded-[3rem] p-4 shadow-2xl border-4 border-gray-800">
-                  {/* Phone Screen */}
-                  <div className="bg-gray-100 w-full h-full rounded-[2.5rem] overflow-hidden flex flex-col pt-8 relative">
-                     <div className="absolute top-0 inset-x-0 h-6 bg-black flex justify-center items-end pb-1">
-                        <div className="w-16 h-4 bg-gray-900 rounded-b-xl"></div>
+               {/* Left side: Text Content */}
+               <div className="max-w-2xl text-center lg:text-left mx-auto lg:mx-0">
+                  <h2 className="text-base font-semibold leading-7 text-accent uppercase tracking-widest">Interactive Simulator</h2>
+                  <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl text-balance">
+                     Try It Out
+                  </p>
+                  <p className="mt-6 text-lg leading-8 text-foreground/80 font-sans">
+                     Experience the 0-Link USSD interface directly in your browser. Use the interactive simulator to dial <span className="font-mono bg-foreground/10 px-2 py-1 rounded text-accent">*384*7342#</span> and explore the seamless bridge to decentralized finance.
+                  </p>
+
+                  <dl className="mt-10 max-w-xl space-y-8 text-base leading-7 text-foreground/70 font-sans mx-auto lg:mx-0 text-left">
+                     <div className="relative pl-9">
+                        <dt className="inline font-semibold text-foreground">
+                           <svg className="absolute left-1 top-1 h-5 w-5 text-accent" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                           </svg>
+                           Real-time USSD Simulation.
+                        </dt>
+                        <dd className="inline pl-2">Test out our menus navigating through different options seamlessly.</dd>
+                     </div>
+                     <div className="relative pl-9">
+                        <dt className="inline font-semibold text-foreground">
+                           <svg className="absolute left-1 top-1 h-5 w-5 text-accent" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                           </svg>
+                           Interactive Environment.
+                        </dt>
+                        <dd className="inline pl-2">See how transactions are handled just as they would be on an offline mobile device.</dd>
+                     </div>
+                  </dl>
+               </div>
+
+               {/* Right side: Iframe Simulator */}
+               <div className="w-full flex justify-center lg:justify-end">
+                  <div className="relative w-full max-w-[360px] aspect-[9/19] rounded-[3rem] p-3 border-8 border-slate-900 dark:border-slate-800 shadow-2xl overflow-hidden bg-slate-900 group transition-all duration-500 hover:shadow-cyan-500/20">
+
+                     {/* Phone Edge / Bezel */}
+                     <div className="absolute top-0 inset-x-0 h-7 bg-slate-900 dark:bg-slate-800 flex justify-center items-end pb-2 z-10 w-40 mx-auto rounded-b-3xl">
+                        <div className="w-16 h-1.5 bg-slate-800 dark:bg-slate-700 rounded-full"></div>
                      </div>
 
-                     <div className="flex-1 p-6 font-mono text-sm flex flex-col bg-white">
-                        {screen === 'home' && (
-                           <div className="flex-1 flex flex-col justify-center">
-                              <p className="text-center text-gray-400">Dial a USSD code</p>
-                           </div>
-                        )}
-
-                        {screen === 'menu' && (
-                           <div className="flex-1 text-gray-900">
-                              <p className="font-bold mb-4">0-Link Menu</p>
-                              <p>1. Send 0G Tokens</p>
-                              <p>2. View Balance</p>
-                              <p>3. AI Identity</p>
-                              <p className="mt-4 text-xs text-gray-500">Reply with option:</p>
-                           </div>
-                        )}
-
-                        {screen === 'send_amount' && (
-                           <div className="flex-1 text-gray-900">
-                              <p className="font-bold mb-4">Send Funds</p>
-                              <p>Enter amount to send:</p>
-                           </div>
-                        )}
-
-                        {screen === 'success' && (
-                           <div className="flex-1 text-gray-900 flex flex-col items-center justify-center text-center">
-                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
-                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                 </svg>
-                              </div>
-                              <p className="font-bold">Transaction Successful</p>
-                              <p className="text-xs text-gray-500 mt-2">Verified by 0G AI</p>
-                              <button onClick={() => setScreen('home')} className="mt-6 text-accent font-bold text-xs underline">Back to Default</button>
-                           </div>
-                        )}
-
-                        {/* Input area */}
-                        <form onSubmit={handleDial} className="mt-auto border-t border-gray-200 pt-4 flex gap-2">
-                           <input
-                              type="text"
-                              value={ussdInput}
-                              onChange={(e) => setUssdInput(e.target.value)}
-                              placeholder={screen === 'home' ? "*123#" : "Enter..."}
-                              className="flex-1 bg-gray-100 rounded px-3 py-2 outline-none border border-gray-300 focus:border-accent font-mono text-sm text-gray-900"
-                              autoFocus
-                           />
-                           <button type="submit" className="bg-foreground text-background font-bold px-4 py-2 rounded uppercase text-xs hover:bg-black">
-                              {screen === 'home' ? 'Dial' : 'Send'}
-                           </button>
-                        </form>
+                     {/* The generic Simulator Iframe */}
+                     <div className="bg-white w-full h-full rounded-[2.2rem] overflow-hidden relative">
+                        <iframe
+                           src="https://developers.africastalking.com/simulator"
+                           className="absolute top-0 left-0 w-full h-full border-0"
+                           title="Africa's Talking USSD Simulator"
+                           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        />
                      </div>
+
                   </div>
                </div>
+
             </div>
          </div>
       </section>
    );
 }
+

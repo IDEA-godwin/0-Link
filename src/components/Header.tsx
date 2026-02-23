@@ -1,7 +1,25 @@
+"use client";
 import Link from "next/link";
 import React from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Header() {
+   const router = useRouter();
+   const pathname = usePathname();
+
+   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+      // Only intercept if we are already on the home page
+      if (pathname === "/") {
+         e.preventDefault();
+         const elem = document.getElementById(targetId);
+         if (elem) {
+            elem.scrollIntoView({ behavior: "smooth" });
+            // Update URL hash without jumping
+            window.history.pushState(null, "", `/#${targetId}`);
+         }
+      }
+   };
+
    return (
       <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-md bg-white/60 dark:bg-slate-900/60 border-b border-gray-200/50 dark:border-gray-800/50">
          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -19,18 +37,21 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-8 font-medium">
                <Link
                   href="/#how-it-works"
+                  onClick={(e) => handleScroll(e, "how-it-works")}
                   className="text-slate-600 hover:text-cyan-500 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                >
                   How it Works
                </Link>
                <Link
                   href="/#how-we-do-it"
+                  onClick={(e) => handleScroll(e, "how-we-do-it")}
                   className="text-slate-600 hover:text-cyan-500 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                >
                   How We Do It
                </Link>
                <Link
                   href="/#try-it-out"
+                  onClick={(e) => handleScroll(e, "try-it-out")}
                   className="text-slate-600 hover:text-cyan-500 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                >
                   Try it Out
@@ -44,6 +65,7 @@ export default function Header() {
 
                <Link
                   href="/#try-it-out"
+                  onClick={(e) => handleScroll(e, "try-it-out")}
                   className="px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 transition-transform shadow-md font-semibold text-sm"
                >
                   Get Started
