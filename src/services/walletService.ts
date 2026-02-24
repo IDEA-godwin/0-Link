@@ -95,6 +95,46 @@ export class WalletService {
          return "0.0";
       }
    }
+   /**
+    * Transfers native A0GI tokens from an encrypted wallet to a destination address.
+    * Automatically handles gas estimation and transaction broadcasting.
+    */
+   async transferNative(encryptedKey: string, toAddress: string, amount: string): Promise<string> {
+      try {
+         // Resolve the wallet instance and connect it to the provider
+         const wallet = this.getWalletFromEncryptedKey(encryptedKey);
+
+         // Validate destination
+         if (!ethers.isAddress(toAddress)) {
+            throw new Error("Invalid destination address format.");
+         }
+
+         const amountWei = ethers.parseEther(amount);
+
+         // Build standard transaction payload
+         const txParams = {
+            to: toAddress,
+            value: amountWei,
+            // Gas limits and pricing are automatically estimated by Ethers v6 standard SendTransaction method
+         };
+
+         console.log(`Sending ${amount} native 0G to ${toAddress}...`);
+         const txResponse = await wallet.sendTransaction(txParams);
+
+         // Wait for block confirmation (1 block is sufficient for prompt UX feedback on testnet)
+         const receipt = await txResponse.wait(1);
+
+         if (!receipt || receipt.status === 0) {
+            throw new Error("Transaction failed or reverted on-chain.");
+         }
+
+         return txResponse.hash;
+
+      } catch (error: any) {
+         console.error("Wallet Transfer Failed:", error);
+         throw new Error(error.message || "Native transfer encountered a critical error.");
+      }
+   }
 }
 
 export const walletService = new WalletService();
