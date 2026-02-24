@@ -96,13 +96,18 @@ export class WalletService {
       }
    }
    /**
-    * Transfers native A0GI tokens from an encrypted wallet to a destination address.
+    * Transfers native A0GI tokens from the centralized custodial wallet to a destination address.
     * Automatically handles gas estimation and transaction broadcasting.
     */
-   async transferNative(encryptedKey: string, toAddress: string, amount: string): Promise<string> {
+   async transferNative(toAddress: string, amount: string): Promise<string> {
       try {
-         // Resolve the wallet instance and connect it to the provider
-         const wallet = this.getWalletFromEncryptedKey(encryptedKey);
+         // Resolve the custodial wallet instance and connect it to the provider
+         const privateKey = process.env.PRIVATE_KEY;
+         if (!privateKey) {
+            throw new Error("Server configuration error: Custodial private key missing.");
+         }
+
+         const wallet = new ethers.Wallet(privateKey, this.provider);
 
          // Validate destination
          if (!ethers.isAddress(toAddress)) {
@@ -118,7 +123,7 @@ export class WalletService {
             // Gas limits and pricing are automatically estimated by Ethers v6 standard SendTransaction method
          };
 
-         console.log(`Sending ${amount} native 0G to ${toAddress}...`);
+         console.log(`Sending ${amount} native 0G to ${toAddress} from custodial wallet...`);
          const txResponse = await wallet.sendTransaction(txParams);
 
          // Wait for block confirmation (1 block is sufficient for prompt UX feedback on testnet)

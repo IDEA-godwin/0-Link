@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ogStorage } from '@/services/ogStorageService';
 import { walletService } from '@/services/walletService';
-import { encrypt } from '@/utils';
+import { encrypt, decrypt } from '@/utils';
 
 // ── Utility: parse input array ────────────────────────────────────────────────
 const parse = (text: string) => text ? text.split('*') : [''];
@@ -322,12 +322,14 @@ Send to:
    let toAddress = recipValue;
    if (recipType === '1') {
       const recipPhone = recipValue.startsWith('+') ? recipValue : `+${recipValue}`;
-      toAddress = await walletSvc.lookupByPhone(recipPhone);
-      if (!toAddress) {
+      const recipData = await ogStorage.getKV("olink-users", encrypt(recipPhone));
+
+      if (!recipData || !recipData.publicKey) {
          return `END Recipient not found.
 Phone ${recipValue} is not registered on O-Link.
 Ask them to dial *384*77# to join.`;
       }
+      toAddress = recipData.publicKey;
    }
 
    // Validate address format
@@ -337,8 +339,8 @@ Ask them to dial *384*77# to join.`;
 
    // Step 5: Enter PIN
    if (!pin) {
-      const record = await walletSvc.getWalletRecord(phoneNumber);
-      const fee = await chainSvc.estimateTransferFee(record.address, toAddress, amount);
+      // Use a flat fee estimation for now to keep USSD execution fast
+      const fee = "0.001";
       return `CON Confirm Transfer:
 To: ${toAddress.slice(0, 8)}...${toAddress.slice(-6)}
 Amount: ${amount} A0GI
@@ -348,22 +350,32 @@ Enter your 4-digit PIN:`;
    }
 
    // Step 6: Execute transfer after PIN verification
-   const pinOk = await walletSvc.verifyPin(phoneNumber, pin);
-   if (!pinOk) {
+   const senderData = await ogStorage.getKV("olink-users", encrypt(phoneNumber));
+   if (!senderData) {
+      return 'END Sender wallet not found in registry.';
+   }
+
+   const decryptedPin = decrypt(senderData.encryptedPin);
+   if (decryptedPin !== pin) {
       return 'END Wrong PIN. Transfer cancelled.\nDial again to retry.';
    }
 
-   const { txHash, proofId } = await chainSvc.transferNative(
-      phoneNumber, toAddress, amount, sessionId
-   );
+   try {
+      console.log(`[USSD] Initiating native transfer of ${amount} to ${toAddress}`);
+      const txHash = await walletService.transferNative(toAddress, amount);
+      const shortHash = `${txHash.slice(0, 8)}...${txHash.slice(-6)}`;
 
-   // SMS confirmation
-   smsSvc.sendTransferConfirmation(phoneNumber, amount, txHash, proofId).catch(() => { });
+      return `END Transfer Successful!
+Amount: ${amount} A0GI
+To: ${toAddress.slice(0, 8)}...
+TxHash: ${shortHash}`;
 
-   return `END Transfer Successful ✅
-Amount: ${amount} A0GI sent
-0G Proof: ${proofId}
-Check SMS for full tx details.`;
+   } catch (error: any) {
+      console.error("Transfer error:", error);
+      return `END Transfer Failed!
+Error: ${error.message || "Network exception."}
+Dial again to retry.`;
+   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
