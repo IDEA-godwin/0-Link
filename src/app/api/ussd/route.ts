@@ -228,7 +228,6 @@ async function handleCheckBalance(phoneNumber: string, sessionId: string, chain:
    if (!chain) {
       return `CON Select Chain:
 1. 0G Galileo (A0GI)
-2. Ethereum (ETH)
 
 0. Main Menu`;
    }

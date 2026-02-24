@@ -46,9 +46,12 @@ export default function Hero() {
                <div className="lg:pr-8 lg:pt-4">
                   <div className="lg:max-w-lg">
                      <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl mb-6">
-                        0-Link: The Bridge from Dial-Tone to Decentralization.
+                        Offline should not equal Off Grid.
                      </h1>
-                     <p className="mt-6 text-lg leading-8 text-foreground/80 font-sans">
+                     <p className="mt-6 text-2xl leading-8 text-foreground/80 font-sans font-medium">
+                        Dial. Transact. Verify.
+                     </p>
+                     <p className="mt-4 text-lg leading-8 text-foreground/70 font-sans">
                         Empowering the offline world with verifiable AI. Access the 0G Labs ecosystem from any feature phone—no internet, no data, no barriers.
                      </p>
                      <div className="mt-10 flex items-center gap-x-6">
